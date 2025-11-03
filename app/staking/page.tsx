@@ -1,11 +1,18 @@
 "use client";
 
+import * as React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PageShell } from "@/components/dashboard/page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStaking } from "@/lib/hooks/useStaking";
@@ -19,19 +26,40 @@ const stakeSchema = z.object({
 type StakeFormValues = z.infer<typeof stakeSchema>;
 
 const tiers = [
-  { id: 0, name: "Flexible", apr: "6% APR", lock: "30 day minimum" },
-  { id: 1, name: "Medium", apr: "12-15% APR", lock: "60-120 days" },
-  { id: 2, name: "Long", apr: "20-22% APR", lock: "180+ days" },
-  { id: 3, name: "Elite", apr: "30-32% APR", lock: "360+ days" },
+  { id: 0, name: "Flexible", apr: "6% APR", lock: "30 day minimum", minDays: 30 },
+  { id: 1, name: "Medium", apr: "12-15% APR", lock: "60-120 days", minDays: 60 },
+  { id: 2, name: "Long", apr: "20-22% APR", lock: "180+ days", minDays: 180 },
+  { id: 3, name: "Elite", apr: "30-32% APR", lock: "360+ days", minDays: 360 },
 ];
 
 export default function StakingPage() {
-  const { summary, stats, stakes, isLoading, refetchAll, stake, claim, unstake, isPending } = useStaking();
+  const {
+    summary,
+    stats,
+    stakes,
+    isLoading,
+    refetchAll,
+    stake,
+    claim,
+    unstake,
+    isPending,
+  } = useStaking();
 
   const stakeForm = useForm<StakeFormValues>({
     resolver: zodResolver(stakeSchema),
     defaultValues: { amount: "", tier: "0", lockDays: "30" },
   });
+
+  // Watch for tier changes and update lock duration
+  const selectedTier = stakeForm.watch("tier");
+  const currentTierData = tiers.find((t) => t.id === Number(selectedTier));
+
+  // Update lock duration when tier changes
+  React.useEffect(() => {
+    if (currentTierData) {
+      stakeForm.setValue("lockDays", String(currentTierData.minDays));
+    }
+  }, [selectedTier, currentTierData, stakeForm]);
 
   const withdrawForm = useForm<{ stakeId: string }>({
     defaultValues: { stakeId: "" },
@@ -79,57 +107,96 @@ export default function StakingPage() {
   return (
     <PageShell title="Staking dashboard" subtitle="Test Velirion staking flows">
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <Card className="border-none bg-gradient-to-br from-indigo-950/60 via-purple-950/60 to-zinc-1000/50 text-white shadow-xl shadow-purple-900/30">
+        <Card className="border-none bg-gradient-to-br from-indigo-950/70 via-purple-950/70 to-zinc-950/70 text-white shadow-sm backdrop-blur-lg flex flex-col">
           <CardHeader>
-            <CardTitle className="text-lg">Stake VLR</CardTitle>
+            <CardTitle className="text-lg font-heading">Stake VLR</CardTitle>
             <CardDescription className="text-xs text-white/60">
-              VelirionStaking.stake(amount, tier, lockSeconds) with automatic VLR approvals.
+              VelirionStaking.stake(amount, tier, lockSeconds) with automatic
+              VLR approvals.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-auto flex-1 flex flex-col justify-between">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {tiers.map((tier) => (
-                <Card key={tier.id} className="border border-white/10 bg-white/5 p-4 text-white">
-                  <p className="text-sm font-semibold">{tier.name}</p>
+                <Card
+                  key={tier.id}
+                  className="border border-white/10 bg-white/5 p-4 text-white"
+                >
+                  <p className="text-sm font-medium">{tier.name}</p>
                   <p className="text-xs text-white/60">{tier.apr}</p>
                   <p className="text-xs text-white/50">{tier.lock}</p>
                 </Card>
               ))}
             </div>
 
-            <form onSubmit={stakeForm.handleSubmit(handleStake)} className="grid gap-4 md:grid-cols-3">
+            <form
+              onSubmit={stakeForm.handleSubmit(handleStake)}
+              className="grid gap-4 w-full mt-6 md:mt-1"
+            >
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-wide text-white/50">Amount (VLR)</label>
-                <Input placeholder="500" {...stakeForm.register("amount")} />
+                <label className="text-xs font-heading uppercase tracking-wide text-white/50">
+                  Amount (VLR)
+                </label>
+                <Input
+                  placeholder="500"
+                  {...stakeForm.register("amount")}
+                  className="bg-zinc-900"
+                />
                 {stakeForm.formState.errors.amount ? (
-                  <p className="text-xs text-rose-400">{stakeForm.formState.errors.amount.message}</p>
+                  <p className="text-xs text-rose-400">
+                    {stakeForm.formState.errors.amount.message}
+                  </p>
                 ) : null}
               </div>
-              <div className="space-y-2">
-                <label className="text-xs uppercase tracking-wide text-white/50">Tier</label>
+              <div className="space-y-2 md:space-y-4">
+                <label className="text-xs font-heading uppercase tracking-wide text-white/50">
+                  Tier
+                </label>
                 <select
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                  className="flex h-9 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   {...stakeForm.register("tier")}
                 >
                   {tiers.map((tier) => (
-                    <option key={tier.id} value={tier.id} className="bg-zinc-900 text-white">
+                    <option
+                      key={tier.id}
+                      value={tier.id}
+                      className="bg-zinc-900 text-white"
+                    >
                       {tier.name}
                     </option>
                   ))}
                 </select>
                 {stakeForm.formState.errors.tier ? (
-                  <p className="text-xs text-rose-400">{stakeForm.formState.errors.tier.message}</p>
+                  <p className="text-xs text-rose-400">
+                    {stakeForm.formState.errors.tier.message}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-wide text-white/50">Lock duration (days)</label>
-                <Input type="number" min={30} {...stakeForm.register("lockDays")} />
+                <label className="text-xs font-heading uppercase tracking-wide text-white/50">
+                  Lock duration (days)
+                </label>
+                <Input
+                  type="number"
+                  min={currentTierData?.minDays || 30}
+                  {...stakeForm.register("lockDays")}
+                  className="bg-zinc-900"
+                />
+                <p className="text-xs text-white/50">
+                  Minimum: {currentTierData?.minDays || 30} days for {currentTierData?.name || "selected"} tier
+                </p>
                 {stakeForm.formState.errors.lockDays ? (
-                  <p className="text-xs text-rose-400">{stakeForm.formState.errors.lockDays.message}</p>
+                  <p className="text-xs text-rose-400">
+                    {stakeForm.formState.errors.lockDays.message}
+                  </p>
                 ) : null}
               </div>
               <div className="md:col-span-3">
-                <Button type="submit" disabled={isPending} className="w-full rounded-xl">
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full rounded-xl cursor-pointer font-heading mt-5 md:mt-10"
+                >
                   {isPending ? "Submitting…" : "Stake VLR"}
                 </Button>
               </div>
@@ -137,33 +204,64 @@ export default function StakingPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none bg-zinc-950/60 text-white shadow-xl shadow-black/40">
+        <Card className="border border-white/10 bg-zinc-900/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Rewards monitor</CardTitle>
+            <CardTitle className="text-lg font-heading">
+              Rewards monitor
+            </CardTitle>
             <CardDescription className="text-xs text-white/60">
-              Live metrics from VelirionStaking.getUserStakingInfo & getContractStats.
+              Live metrics from VelirionStaking.getUserStakingInfo &
+              getContractStats.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-white/70">
             <div className="rounded-xl bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-wide text-white/50">You</p>
-              <p className="text-lg font-semibold">
-                {summary ? `${summary.totalStaked} VLR staked` : isLoading ? "Loading…" : "--"}
+              <p className="text-xs uppercase tracking-wide text-white/50">
+                You
+              </p>
+              <p className="text-lg font-medium">
+                {summary
+                  ? `${summary.totalStaked} VLR staked`
+                  : isLoading
+                  ? "Loading…"
+                  : "--"}
               </p>
               <p className="text-xs text-white/50">
-                Rewards claimed: {summary ? `${summary.totalRewardsClaimed} VLR` : "--"}
+                Rewards claimed:{" "}
+                {summary ? `${summary.totalRewardsClaimed} VLR` : "--"}
               </p>
             </div>
             <div className="rounded-xl bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-wide text-white/50">Protocol totals</p>
-              <p className="text-sm">Staked: {stats ? `${stats.totalStaked} VLR` : "--"}</p>
-              <p className="text-sm">Stakers: {stats ? stats.totalStakers : "--"}</p>
-              <p className="text-sm">Rewards paid: {stats ? `${stats.totalRewardsDistributed} VLR` : "--"}</p>
+              <p className="text-xs uppercase tracking-wide text-white/50">
+                Protocol totals
+              </p>
+              <p className="text-sm">
+                Staked: {stats ? `${stats.totalStaked} VLR` : "--"}
+              </p>
+              <p className="text-sm">
+                Stakers: {stats ? stats.totalStakers : "--"}
+              </p>
+              <p className="text-sm">
+                Rewards paid:{" "}
+                {stats ? `${stats.totalRewardsDistributed} VLR` : "--"}
+              </p>
             </div>
-            <form onSubmit={withdrawForm.handleSubmit(handleWithdraw)} className="space-y-3">
-              <label className="text-xs uppercase tracking-wide text-white/50">Unstake position ID</label>
-              <Input placeholder="Stake ID" {...withdrawForm.register("stakeId")} />
-              <Button type="submit" className="w-full rounded-xl bg-white/10" disabled={isPending}>
+            <form
+              onSubmit={withdrawForm.handleSubmit(handleWithdraw)}
+              className="space-y-3"
+            >
+              <label className="text-xs uppercase tracking-wide text-white/50">
+                Unstake position ID
+              </label>
+              <Input
+                placeholder="Stake ID"
+                {...withdrawForm.register("stakeId")}
+              />
+              <Button
+                type="submit"
+                className="w-full rounded-xl bg-white/10 cursor-pointer font-heading"
+                disabled={isPending}
+              >
                 {isPending ? "Submitting…" : "Unstake"}
               </Button>
             </form>
@@ -172,11 +270,12 @@ export default function StakingPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <Card className="border-none bg-zinc-950/60 text-white shadow-xl shadow-black/40">
+        <Card className="border border-white/10 bg-zinc-900/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Your stakes</CardTitle>
+            <CardTitle className="text-lg font-heading">Your stakes</CardTitle>
             <CardDescription className="text-xs text-white/60">
-              Claim rewards or verify lock periods. Data from getStakeInfo + calculateRewards.
+              Claim rewards or verify lock periods. Data from getStakeInfo +
+              calculateRewards.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-white/70">
@@ -190,7 +289,7 @@ export default function StakingPage() {
                     className="rounded-xl bg-white/5 p-4 text-xs text-white/60"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-semibold text-white">
+                      <p className="font-medium text-white">
                         ID #{stakeItem.id.toString()} · Tier {stakeItem.tier}
                       </p>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-white/70">
@@ -206,9 +305,11 @@ export default function StakingPage() {
                     <Button
                       onClick={() => handleClaim(stakeItem.id)}
                       disabled={isPending}
-                      className="mt-3 w-full rounded-xl bg-purple-600/40"
+                      className="mt-3 w-full rounded-xl bg-purple-600/40 cursor-pointer font-heading"
                     >
-                      {isPending ? "Processing…" : `Claim rewards for #${stakeItem.id.toString()}`}
+                      {isPending
+                        ? "Processing…"
+                        : `Claim rewards for #${stakeItem.id.toString()}`}
                     </Button>
                   </div>
                 ))}
@@ -217,9 +318,11 @@ export default function StakingPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none bg-gradient-to-br from-purple-950/40 to-indigo-950/40 text-white shadow-xl shadow-purple-900/40">
+        <Card className="border-none bg-gradient-to-br from-purple-950/70 to-indigo-950/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Tester checklist</CardTitle>
+            <CardTitle className="text-lg font-heading">
+              Tester checklist
+            </CardTitle>
             <CardDescription className="text-xs text-white/60">
               Track staking QA tasks highlighted in the quick-start.
             </CardDescription>

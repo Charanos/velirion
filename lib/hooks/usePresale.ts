@@ -23,6 +23,7 @@ import {
   USDT_CONFIG,
 } from '@/lib/config/contracts';
 import { ERC20_ABI } from '@/lib/abi/erc20';
+import { useTransactionStore } from '@/lib/stores/transactionStore';
 
 const ZERO_ADDRESS: Address = zeroAddress;
 
@@ -146,6 +147,7 @@ export function usePresaleInfo() {
 export function usePresaleActions() {
   const config = useConfig();
   const { address } = useAccount();
+  const { addTransaction, updateTransaction } = useTransactionStore();
   const {
     writeContractAsync: writePresale,
     isPending: presalePending,
@@ -168,8 +170,19 @@ export function usePresaleActions() {
       functionName: 'buyWithETH',
       args: [getSafeAddress(referrer)],
       value,
+      gas: 250000n, // Explicit gas limit
     });
+    
+    addTransaction({
+      hash,
+      type: 'presale',
+      amount: amount,
+      from: address,
+    });
+    
     await wait(hash);
+    
+    updateTransaction(hash, { status: 'confirmed' });
   }
 
   async function buyWithToken(
@@ -186,6 +199,7 @@ export function usePresaleActions() {
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [PRESALE_CONFIG.address, parsed],
+      gas: 100000n, // Explicit gas limit
     });
     await wait(approveHash);
     const buyHash = await writePresale({
@@ -193,8 +207,19 @@ export function usePresaleActions() {
       abi: PRESALE_CONFIG.abi,
       functionName,
       args: [parsed, getSafeAddress(referrer)],
+      gas: 250000n, // Explicit gas limit
     });
+    
+    addTransaction({
+      hash: buyHash,
+      type: 'presale',
+      amount: amount,
+      from: address,
+    });
+    
     await wait(buyHash);
+    
+    updateTransaction(buyHash, { status: 'confirmed' });
   }
 
   async function buyWithUSDC(amount: string, referrer?: string | null) {

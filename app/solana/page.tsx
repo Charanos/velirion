@@ -7,19 +7,28 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PageShell } from "@/components/dashboard/page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSolanaActions } from "@/lib/hooks/useSolanaActions";
 
-const SolanaBalanceCard = dynamic(() => import("@/components/solana/solana-balance-card"), {
-  ssr: false,
-  loading: () => (
-    <Card className="border-none bg-zinc-950/60 text-white shadow-xl">
-      <CardContent className="p-6">Loading Solana context…</CardContent>
-    </Card>
-  ),
-});
+const SolanaBalanceCard = dynamic(
+  () => import("@/components/solana/solana-balance-card"),
+  {
+    ssr: false,
+    loading: () => (
+      <Card className="border-none bg-zinc-950/60 text-white shadow-xl">
+        <CardContent className="p-6">Loading Solana context…</CardContent>
+      </Card>
+    ),
+  }
+);
 
 const transferSchema = z.object({
   recipient: z.string().min(32, "Enter recipient pubkey"),
@@ -35,7 +44,14 @@ type AirdropFormValues = z.infer<typeof airdropSchema>;
 
 export default function SolanaPage() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const { transferSpl, requestAirdrop, isProcessing, history, error, clearError } = useSolanaActions({
+  const {
+    transferSpl,
+    requestAirdrop,
+    isProcessing,
+    history,
+    error,
+    clearError,
+  } = useSolanaActions({
     onSettled: () => setRefreshKey((prev) => prev + 1),
   });
 
@@ -70,55 +86,97 @@ export default function SolanaPage() {
   };
 
   return (
-    <PageShell title="Solana testing" subtitle="Devnet adapter + SPL operations">
+    <PageShell
+      title="Solana testing"
+      subtitle="Devnet adapter + SPL operations"
+    >
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="border-none bg-gradient-to-br from-purple-950/60 via-indigo-950/60 to-zinc-1000/50 text-white shadow-xl shadow-purple-900/30">
           <CardHeader>
             <CardTitle className="text-lg">SPL token actions</CardTitle>
             <CardDescription className="text-xs text-white/60">
-              Use Solana Wallet Adapter + SPL Token helpers to send the Devnet mint.
+              Use Solana Wallet Adapter + SPL Token helpers to send the Devnet
+              mint.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <Card className="border border-white/10 bg-black/20 p-6 text-white">
-                <p className="text-sm font-semibold">Transfer SPL</p>
+                <p className="text-sm font-medium">Transfer SPL</p>
                 <p className="text-xs text-white/60 mb-4">
-                  Uses associated token accounts + createTransferInstruction before confirming on Devnet.
+                  Uses associated token accounts + createTransferInstruction
+                  before confirming on Devnet.
                 </p>
-                <form onSubmit={transferForm.handleSubmit(onTransfer)} className="grid gap-3">
+                <form
+                  onSubmit={transferForm.handleSubmit(onTransfer)}
+                  className="grid gap-3"
+                >
                   <div className="grid gap-2">
-                    <label className="text-xs uppercase tracking-wide text-white/50">Recipient</label>
-                    <Input placeholder="Recipient pubkey" {...transferForm.register("recipient")} />
+                    <label className="text-xs uppercase tracking-wide text-white/50">
+                      Recipient
+                    </label>
+                    <Input
+                      placeholder="Recipient pubkey"
+                      {...transferForm.register("recipient")}
+                    />
                     {transferForm.formState.errors.recipient ? (
-                      <p className="text-xs text-rose-400">{transferForm.formState.errors.recipient.message}</p>
+                      <p className="text-xs text-rose-400">
+                        {transferForm.formState.errors.recipient.message}
+                      </p>
                     ) : null}
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-xs uppercase tracking-wide text-white/50">Amount (SPL)</label>
-                    <Input placeholder="0.50" {...transferForm.register("amount")} />
+                    <label className="text-xs uppercase tracking-wide text-white/50">
+                      Amount (SPL)
+                    </label>
+                    <Input
+                      placeholder="0.50"
+                      {...transferForm.register("amount")}
+                    />
                     {transferForm.formState.errors.amount ? (
-                      <p className="text-xs text-rose-400">{transferForm.formState.errors.amount.message}</p>
+                      <p className="text-xs text-rose-400">
+                        {transferForm.formState.errors.amount.message}
+                      </p>
                     ) : null}
                   </div>
-                  <Button type="submit" className="rounded-xl" disabled={isProcessing}>
+                  <Button
+                    type="submit"
+                    className="rounded-xl"
+                    disabled={isProcessing}
+                  >
                     {isProcessing ? "Processing…" : "Send SPL"}
                   </Button>
                 </form>
               </Card>
 
               <Card className="border border-white/10 bg-black/20 p-6 text-white">
-                <p className="text-sm font-semibold">Request airdrop</p>
-                <p className="text-xs text-white/60 mb-4">Uses connection.requestAirdrop for Devnet lamports.</p>
-                <form onSubmit={airdropForm.handleSubmit(onAirdrop)} className="grid gap-3">
+                <p className="text-sm font-medium">Request airdrop</p>
+                <p className="text-xs text-white/60 mb-4">
+                  Uses connection.requestAirdrop for Devnet lamports.
+                </p>
+                <form
+                  onSubmit={airdropForm.handleSubmit(onAirdrop)}
+                  className="grid gap-3"
+                >
                   <div className="grid gap-2">
-                    <label className="text-xs uppercase tracking-wide text-white/50">Amount (SOL)</label>
-                    <Input placeholder="1" {...airdropForm.register("amount")} />
+                    <label className="text-xs uppercase tracking-wide text-white/50">
+                      Amount (SOL)
+                    </label>
+                    <Input
+                      placeholder="1"
+                      {...airdropForm.register("amount")}
+                    />
                     {airdropForm.formState.errors.amount ? (
-                      <p className="text-xs text-rose-400">{airdropForm.formState.errors.amount.message}</p>
+                      <p className="text-xs text-rose-400">
+                        {airdropForm.formState.errors.amount.message}
+                      </p>
                     ) : null}
                   </div>
-                  <Button type="submit" className="rounded-xl bg-white/10 text-white" disabled={isProcessing}>
+                  <Button
+                    type="submit"
+                    className="rounded-xl bg-white/10 text-white"
+                    disabled={isProcessing}
+                  >
                     {isProcessing ? "Requesting…" : "Request"}
                   </Button>
                 </form>
@@ -129,7 +187,12 @@ export default function SolanaPage() {
               <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
                 <div className="flex items-center justify-between">
                   <span>{error}</span>
-                  <Button size="sm" variant="ghost" className="h-auto px-2 py-0 text-rose-100" onClick={clearError}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-auto px-2 py-0 text-rose-100"
+                    onClick={clearError}
+                  >
                     Dismiss
                   </Button>
                 </div>
@@ -155,15 +218,22 @@ export default function SolanaPage() {
             ) : (
               <div className="space-y-2">
                 {history.map((entry) => (
-                  <div key={entry.signature} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 p-3">
+                  <div
+                    key={entry.signature}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 p-3"
+                  >
                     <div className="space-y-1">
                       <p className="text-white">
-                        {entry.type === "transfer" ? "SPL transfer" : "Airdrop"} · {entry.amount}
+                        {entry.type === "transfer" ? "SPL transfer" : "Airdrop"}{" "}
+                        · {entry.amount}
                       </p>
                       <p className="text-white/50">{entry.signatureShort}</p>
                     </div>
                     <span className="text-white/40">
-                      {new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(entry.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 ))}

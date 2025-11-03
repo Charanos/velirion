@@ -6,7 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PageShell } from "@/components/dashboard/page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,12 +66,12 @@ export default function PresalePage() {
       usdc: usdcForm,
       usdt: usdtForm,
     }),
-    [ethForm, usdcForm, usdtForm],
+    [ethForm, usdcForm, usdtForm]
   );
 
   const handleSubmit = async (
     handlerKey: "eth" | "usdc" | "usdt",
-    values: FormValues,
+    values: FormValues
   ) => {
     try {
       const trimmedReferrer = values.referrer?.trim();
@@ -89,27 +95,39 @@ export default function PresalePage() {
   const phase = info.phase;
 
   return (
-    <PageShell title="Presale testing" subtitle="Simulate Velirion presale rounds">
+    <PageShell
+      title="Presale testing"
+      subtitle="Simulate Velirion presale rounds"
+    >
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <Card className="border-none bg-gradient-to-br from-purple-950/60 via-indigo-950/60 to-zinc-1000/50 text-white shadow-xl shadow-purple-900/30">
+        <Card className="border-none bg-gradient-to-br from-purple-950/70 via-indigo-950/70 to-zinc-950/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Purchase tokens</CardTitle>
+            <CardTitle className="text-lg font-heading">
+              Purchase tokens
+            </CardTitle>
             <CardDescription className="text-xs text-white/60">
-              Execute presale buys using the contract methods from the quick-start checklist. ERC20 flows auto-handle approvals.
+              Execute presale buys using the contract methods from the
+              quick-start checklist. ERC20 flows auto-handle approvals.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <Tabs defaultValue="ETH" className="space-y-4">
               <TabsList className="bg-white/10">
                 {paymentMethods.map((method) => (
-                  <TabsTrigger key={method.label} value={method.label}>
+                  <TabsTrigger
+                    key={method.label}
+                    value={method.label}
+                    className="cursor-pointer font-heading"
+                  >
                     {method.label}
                   </TabsTrigger>
                 ))}
               </TabsList>
               {paymentMethods.map((method) => {
                 const form = forms[method.handlerKey];
-                const submit = form.handleSubmit((values: FormValues) => handleSubmit(method.handlerKey, values));
+                const submit = form.handleSubmit((values: FormValues) =>
+                  handleSubmit(method.handlerKey, values)
+                );
 
                 return (
                   <TabsContent key={method.label} value={method.label}>
@@ -118,18 +136,38 @@ export default function PresalePage() {
                         <p className="text-sm text-white/70">{method.detail}</p>
                         <form onSubmit={submit} className="space-y-4">
                           <div className="grid gap-2">
-                            <label className="text-xs uppercase tracking-wide text-white/50">Amount</label>
-                            <Input placeholder={method.label === "ETH" ? "0.25" : "500"} {...form.register("amount")} />
+                            <label className="text-xs font-heading uppercase tracking-wide text-white/50">
+                              Amount
+                            </label>
+                            <Input
+                              placeholder={
+                                method.label === "ETH" ? "0.25" : "500"
+                              }
+                              {...form.register("amount")}
+                            />
                             {form.formState.errors.amount ? (
-                              <p className="text-xs text-rose-400">{form.formState.errors.amount.message}</p>
+                              <p className="text-xs text-rose-400">
+                                {form.formState.errors.amount.message}
+                              </p>
                             ) : null}
                           </div>
                           <div className="grid gap-2">
-                            <label className="text-xs uppercase tracking-wide text-white/50">Referral (optional)</label>
-                            <Input placeholder="0x referrer" {...form.register("referrer")} />
+                            <label className="text-xs font-heading uppercase tracking-wide text-white/50">
+                              Referral (optional)
+                            </label>
+                            <Input
+                              placeholder="0x referrer"
+                              {...form.register("referrer")}
+                            />
                           </div>
-                          <Button type="submit" className="w-full rounded-xl" disabled={actions.isPending}>
-                            {actions.isPending ? "Submitting…" : `Buy with ${method.label}`}
+                          <Button
+                            type="submit"
+                            className="w-full rounded-xl cursor-pointer font-heading"
+                            disabled={actions.isPending}
+                          >
+                            {actions.isPending
+                              ? "Submitting…"
+                              : `Buy with ${method.label}`}
                           </Button>
                         </form>
                       </CardContent>
@@ -141,9 +179,9 @@ export default function PresalePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none bg-zinc-950/60 text-white shadow-xl">
+        <Card className="border border-white/10 bg-zinc-900/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Round status</CardTitle>
+            <CardTitle className="text-lg font-heading">Round status</CardTitle>
             <CardDescription className="text-xs text-white/60">
               Live data from PresaleContractV2.getCurrentPhaseInfo & metrics.
             </CardDescription>
@@ -151,7 +189,9 @@ export default function PresalePage() {
           <CardContent className="space-y-4 text-sm text-white/70">
             <div className="flex items-center justify-between">
               <span>Active</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs">{phase?.isActive ? "Yes" : "No"}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
+                {phase?.isActive ? "Yes" : "No"}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span>Price per VLR</span>
@@ -170,7 +210,11 @@ export default function PresalePage() {
             <p className="rounded-xl bg-white/5 p-4 text-xs text-white/60">
               Claimable amount: {totals.claimable ?? "--"} VLR
             </p>
-            <Button onClick={actions.claim} disabled={actions.isPending} className="w-full rounded-xl bg-purple-600/40">
+            <Button
+              onClick={actions.claim}
+              disabled={actions.isPending}
+              className="w-full rounded-xl bg-purple-600/40 cursor-pointer font-heading"
+            >
               {actions.isPending ? "Processing…" : "Claim vested tokens"}
             </Button>
           </CardContent>
@@ -178,9 +222,9 @@ export default function PresalePage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-none bg-zinc-950/60 text-white shadow-xl shadow-black/40">
+        <Card className="border border-white/10 bg-zinc-900/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Referral metrics</CardTitle>
+            <CardTitle className="text-lg font-heading">Referral metrics</CardTitle>
             <CardDescription className="text-xs text-white/60">
               Data from getReferralInfo & getUserPurchases.
             </CardDescription>
@@ -193,16 +237,21 @@ export default function PresalePage() {
               <p>Total volume: {info.referral?.totalVolume ?? "--"}</p>
             </div>
             <div className="space-y-3 rounded-xl bg-white/5 p-4 text-xs text-white/60">
-              <p className="font-semibold text-white">Purchase history</p>
+              <p className="font-medium text-white">Purchase history</p>
               {info.purchases.length === 0 ? (
                 <p>No purchases yet.</p>
               ) : (
                 <div className="space-y-2">
                   {info.purchases.map((purchase) => (
-                    <div key={`${purchase.phaseId}-${purchase.timestamp}`} className="flex items-center justify-between">
+                    <div
+                      key={`${purchase.phaseId}-${purchase.timestamp}`}
+                      className="flex items-center justify-between"
+                    >
                       <span>
                         Phase {purchase.phaseId} · {purchase.amount}
-                        {purchase.paymentToken ? ` (${purchase.paymentToken.slice(0, 6)}…)` : ""}
+                        {purchase.paymentToken
+                          ? ` (${purchase.paymentToken.slice(0, 6)}…)`
+                          : ""}
                       </span>
                       <span>{purchase.tokens} VLR</span>
                     </div>
@@ -213,9 +262,9 @@ export default function PresalePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-none bg-gradient-to-br from-indigo-950/40 to-purple-950/40 text-white shadow-xl shadow-purple-900/40">
+        <Card className="border-none bg-gradient-to-br from-indigo-950/70 to-purple-950/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg">QA notes</CardTitle>
+            <CardTitle className="text-lg font-heading">QA notes</CardTitle>
             <CardDescription className="text-xs text-white/60">
               Use this space to track presale testing outcomes.
             </CardDescription>

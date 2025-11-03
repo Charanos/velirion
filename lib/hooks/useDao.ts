@@ -19,6 +19,7 @@ import {
 import type { Abi } from 'viem';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { DAO_CONFIG, STAKING_CONFIG } from '@/lib/config/contracts';
+import { useTransactionStore } from '@/lib/stores/transactionStore';
 
 const SUPPORT = {
   AGAINST: 0,
@@ -302,6 +303,7 @@ export function useDaoData() {
 export function useDaoActions() {
   const config = useConfig();
   const { address } = useAccount();
+  const { addTransaction, updateTransaction } = useTransactionStore();
   const {
     writeContractAsync: writeDao,
     isPending,
@@ -325,8 +327,19 @@ export function useDaoActions() {
       abi: DAO_CONFIG.abi,
       functionName: 'propose',
       args: [targets, parsedValues, calldatas, description],
+      gas: 500000n, // Explicit gas limit
     });
+    
+    addTransaction({
+      hash,
+      type: 'dao_propose',
+      amount: description.slice(0, 50),
+      from: address,
+    });
+    
     await wait(hash);
+    
+    updateTransaction(hash, { status: 'confirmed' });
   }
 
   async function castVote(proposalId: bigint, support: number, voteAmount: string, reason?: string) {
@@ -337,8 +350,19 @@ export function useDaoActions() {
       abi: DAO_CONFIG.abi,
       functionName: 'castVote',
       args: [proposalId, support, parsedAmount, reason ?? ''],
+      gas: 300000n, // Explicit gas limit
     });
+    
+    addTransaction({
+      hash,
+      type: 'dao_vote',
+      amount: voteAmount,
+      from: address,
+    });
+    
     await wait(hash);
+    
+    updateTransaction(hash, { status: 'confirmed' });
   }
 
   async function queue(proposalId: bigint) {

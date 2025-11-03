@@ -22,14 +22,14 @@ export function TransferForm() {
     },
   });
 
-  const { transfer, refetchBalance, isPending } = useTokenActions();
+  const { transfer, isPending } = useTokenActions();
 
   async function onSubmit(values: z.infer<typeof transferSchema>) {
     try {
-      await transfer(values.recipient, values.amount);
-      toast.success('Transfer submitted');
+      const hash = await transfer(values.recipient, values.amount);
+      toast.success(`Transfer submitted! Hash: ${hash.slice(0, 10)}...`);
       form.reset();
-      await refetchBalance();
+      // Balance will auto-update when transaction confirms
     } catch (error) {
       console.error(error);
       toast.error('Transfer failed, check console for details');

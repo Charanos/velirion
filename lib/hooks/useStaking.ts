@@ -19,6 +19,7 @@ import { waitForTransactionReceipt } from 'wagmi/actions';
 import { STAKING_CONFIG } from '@/lib/config/contracts';
 import { VLR_TOKEN_CONFIG } from '@/lib/config/token';
 import { ERC20_ABI } from '@/lib/abi/erc20';
+import { useTransactionStore } from '@/lib/stores/transactionStore';
 
 const SECONDS_PER_DAY = 86_400n;
 const ZERO_ADDRESS: Address = zeroAddress;
@@ -250,6 +251,7 @@ export function useStakingData() {
 export function useStakingActions() {
   const config = useConfig();
   const { address } = useAccount();
+  const { addTransaction, updateTransaction } = useTransactionStore();
   const {
     writeContractAsync: writeToken,
     isPending: tokenPending,
@@ -280,6 +282,7 @@ export function useStakingActions() {
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [STAKING_CONFIG.address, parsedAmount],
+      gas: 100000n, // Explicit gas limit to prevent "gas limit too high" error
     });
     await wait(approveHash);
 
@@ -288,8 +291,22 @@ export function useStakingActions() {
       abi: STAKING_CONFIG.abi,
       functionName: 'stake',
       args: [parsedAmount, args.tier, lockSeconds],
+      gas: 300000n, // Explicit gas limit
     });
+    
+    // Track transaction
+    addTransaction({
+      hash: stakeHash,
+      type: 'stake',
+      amount: args.amount,
+      from: address,
+    });
+    
     await wait(stakeHash);
+    
+    updateTransaction(stakeHash, {
+      status: 'confirmed',
+    });
   }
 
   async function unstake(stakeId: number | string) {
@@ -299,8 +316,22 @@ export function useStakingActions() {
       abi: STAKING_CONFIG.abi,
       functionName: 'unstake',
       args: [BigInt(stakeId)],
+      gas: 200000n, // Explicit gas limit
     });
+    
+    // Track transaction
+    addTransaction({
+      hash,
+      type: 'unstake',
+      amount: stakeId.toString(),
+      from: address,
+    });
+    
     await wait(hash);
+    
+    updateTransaction(hash, {
+      status: 'confirmed',
+    });
   }
 
   async function claim(stakeId: number | string) {
@@ -310,8 +341,22 @@ export function useStakingActions() {
       abi: STAKING_CONFIG.abi,
       functionName: 'claimRewards',
       args: [BigInt(stakeId)],
+      gas: 150000n, // Explicit gas limit
     });
+    
+    // Track transaction
+    addTransaction({
+      hash,
+      type: 'claim',
+      amount: stakeId.toString(),
+      from: address,
+    });
+    
     await wait(hash);
+    
+    updateTransaction(hash, {
+      status: 'confirmed',
+    });
   }
 
   return {

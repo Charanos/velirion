@@ -6,7 +6,7 @@ import { SolanaWalletButton } from "@/components/wallet/solana-wallet-button";
 
 export function WalletButton() {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-zinc-900/70 p-2 shadow-xl shadow-purple-900/40 backdrop-blur">
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-zinc-900/70 backdrop-blur-lg p-2 shadow-sm w-full sm:w-auto">
       <ConnectButton.Custom>
         {({
           account,
@@ -21,7 +21,7 @@ export function WalletButton() {
 
           if (!ready) {
             return (
-              <div className="h-10 w-36 animate-pulse rounded-xl bg-zinc-800/60" />
+              <div className="h-10 w-36 animate-pulse rounded-xl bg-white/10" />
             );
           }
 
@@ -30,19 +30,19 @@ export function WalletButton() {
               <button
                 type="button"
                 onClick={openConnectModal}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 via-fuchsia-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/50 transition hover:shadow-purple-700/60 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500 backdrop-blur-lg px-5 py-2.5 text-sm font-heading font-semibold text-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
-                Connect Wallet
+                Connect ETH Wallet
               </button>
             );
           }
 
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={openChainModal}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-purple-400/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-300"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/70 backdrop-blur-lg px-4 py-2.5 text-sm font-heading text-white/80 transition hover:border-purple-400/40 hover:text-white cursor-pointer flex-1 sm:flex-initial"
               >
                 {chain?.hasIcon && chain?.iconUrl && (
                   <span
@@ -62,7 +62,7 @@ export function WalletButton() {
               <button
                 type="button"
                 onClick={openAccountModal}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-900/40 transition hover:shadow-fuchsia-700/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500 backdrop-blur-lg px-4 py-2.5 text-sm font-heading font-semibold text-white shadow-sm hover:shadow-md transition-shadow cursor-pointer flex-1 sm:flex-initial"
               >
                 <User className="size-4" />
                 {account?.displayName}

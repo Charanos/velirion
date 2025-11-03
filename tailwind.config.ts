@@ -14,6 +14,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-nunito)", ...defaultTheme.fontFamily.sans],
+        heading: ["var(--font-montserrat)", ...defaultTheme.fontFamily.sans],
         mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
       },
       colors: {

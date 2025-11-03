@@ -20,14 +20,14 @@ export function BurnForm() {
     },
   });
 
-  const { burn, refetchBalance, isPending } = useTokenActions();
+  const { burn, isPending } = useTokenActions();
 
   async function onSubmit(values: z.infer<typeof burnSchema>) {
     try {
-      await burn(values.amount);
-      toast.success('Burn submitted');
+      const hash = await burn(values.amount);
+      toast.success(`Burn submitted! Hash: ${hash.slice(0, 10)}...`);
       form.reset();
-      await refetchBalance();
+      // Balance will auto-update when transaction confirms
     } catch (error) {
       console.error(error);
       toast.error('Burn failed, check console for details');
