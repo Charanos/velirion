@@ -96,13 +96,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH - Update transaction status
+// PATCH - Update transaction status (with upsert support)
 export async function PATCH(request: NextRequest) {
   try {
     await connectDB();
 
     const body = await request.json();
-    const { hash, status, blockNumber } = body;
+    const { hash, status, blockNumber, type, amount, to, from, walletAddress, timestamp } = body;
 
     if (!hash) {
       return NextResponse.json(
@@ -111,19 +111,38 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Build update data
     const updateData: any = {};
     if (status) updateData.status = status;
     if (blockNumber) updateData.blockNumber = blockNumber;
 
-    const transaction = await Transaction.findOneAndUpdate(
+    // Try to update existing transaction
+    let transaction = await Transaction.findOneAndUpdate(
       { hash },
       updateData,
       { new: true }
     );
 
+    // If transaction doesn't exist and we have enough data, create it
+    if (!transaction && type && amount && walletAddress) {
+      console.log(`Transaction ${hash} not found, creating it...`);
+      transaction = await Transaction.create({
+        hash,
+        type,
+        amount,
+        to,
+        from,
+        walletAddress: walletAddress.toLowerCase(),
+        timestamp: timestamp || Date.now(),
+        status: status || 'pending',
+        blockNumber,
+        chainId: 11155111,
+      });
+    }
+
     if (!transaction) {
       return NextResponse.json(
-        { error: 'Transaction not found' },
+        { error: 'Transaction not found and insufficient data to create' },
         { status: 404 }
       );
     }

@@ -23,17 +23,20 @@ export function PageShell({
   rightSlot,
   contentClassName,
 }: PageShellProps) {
-  const getIsDesktop = () =>
-    typeof window !== "undefined"
-      ? window.innerWidth >= DESKTOP_BREAKPOINT
-      : true;
-
-  const [isDesktop, setIsDesktop] = useState(getIsDesktop);
-  const [sidebarOpen, setSidebarOpen] = useState(() => getIsDesktop());
+  // Always start with false to ensure server/client match
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Set mounted and initialize based on actual window size
+    setMounted(true);
+    const desktop = window.innerWidth >= DESKTOP_BREAKPOINT;
+    setIsDesktop(desktop);
+    setSidebarOpen(desktop);
+
     const handleResize = () => {
-      const desktop = getIsDesktop();
+      const desktop = window.innerWidth >= DESKTOP_BREAKPOINT;
       setIsDesktop(desktop);
       setSidebarOpen(desktop);
     };

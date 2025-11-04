@@ -1,45 +1,55 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTokenBalance } from "@/lib/hooks/useTokenBalance";
 import { useStaking } from "@/lib/hooks/useStaking";
 import { useDao } from "@/lib/hooks/useDao";
 import { useSolanaTokenBalance } from "@/lib/hooks/useSolanaTokenBalance";
+import { safeFormatBalance } from "@/lib/utils/formatters";
 
 export function StatCardsRow() {
+  const [mounted, setMounted] = useState(false);
   const { balance: vlrBalance, loading: vlrLoading } = useTokenBalance();
   const { summary: stakingSummary, isLoading: stakingLoading } = useStaking();
   const { votingPower, isLoading: daoLoading } = useDao();
   const { balance: solBalance, loading: solLoading } = useSolanaTokenBalance();
 
-  // Format large numbers with commas
-  const formatBalance = (balance: string | number | null | undefined) => {
-    if (!balance || balance === undefined) return "0";
-    const num = typeof balance === "string" ? parseFloat(balance) : balance;
-    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const stats = [
     {
       label: "Token Balance",
-      value: vlrLoading ? "Loading..." : `${formatBalance(vlrBalance)} VLR`,
+      value: !mounted || vlrLoading 
+        ? "Loading..." 
+        : `${safeFormatBalance(vlrBalance)} VLR`,
       loading: vlrLoading,
     },
     {
       label: "Staked",
-      value: stakingLoading
+      value: !mounted
         ? "Loading..."
-        : `${formatBalance(stakingSummary?.totalStaked)} VLR`,
+        : stakingLoading
+        ? "Loading..."
+        : stakingSummary
+        ? `${safeFormatBalance(stakingSummary.totalStaked)} VLR`
+        : "0 VLR",
       loading: stakingLoading,
     },
     {
       label: "DAO Voting Power",
-      value: daoLoading ? "Loading..." : `${formatBalance(votingPower)} VP`,
+      value: !mounted || daoLoading 
+        ? "Loading..." 
+        : `${safeFormatBalance(votingPower ?? "0")} VP`,
       loading: daoLoading,
     },
     {
       label: "Solana SPL Balance",
-      value: solLoading ? "Loading..." : `${formatBalance(solBalance)} SPL`,
+      value: !mounted || solLoading 
+        ? "Loading..." 
+        : `${safeFormatBalance(solBalance)} SPL`,
       loading: solLoading,
     },
   ];
@@ -57,7 +67,7 @@ export function StatCardsRow() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {stat.loading ? (
+            {!mounted || stat.loading ? (
               <div className="h-8 w-32 animate-pulse rounded bg-white/10" />
             ) : (
               <p className="text-2xl font-heading font-medium truncate">{stat.value}</p>

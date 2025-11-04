@@ -26,8 +26,20 @@ const stakeSchema = z.object({
 type StakeFormValues = z.infer<typeof stakeSchema>;
 
 const tiers = [
-  { id: 0, name: "Flexible", apr: "6% APR", lock: "30 day minimum", minDays: 30 },
-  { id: 1, name: "Medium", apr: "12-15% APR", lock: "60-120 days", minDays: 60 },
+  {
+    id: 0,
+    name: "Flexible",
+    apr: "6% APR",
+    lock: "30 day minimum",
+    minDays: 30,
+  },
+  {
+    id: 1,
+    name: "Medium",
+    apr: "12-15% APR",
+    lock: "60-120 days",
+    minDays: 60,
+  },
   { id: 2, name: "Long", apr: "20-22% APR", lock: "180+ days", minDays: 180 },
   { id: 3, name: "Elite", apr: "30-32% APR", lock: "360+ days", minDays: 360 },
 ];
@@ -183,7 +195,8 @@ export default function StakingPage() {
                   className="bg-zinc-900"
                 />
                 <p className="text-xs text-white/50">
-                  Minimum: {currentTierData?.minDays || 30} days for {currentTierData?.name || "selected"} tier
+                  Minimum: {currentTierData?.minDays || 30} days for{" "}
+                  {currentTierData?.name || "selected"} tier
                 </p>
                 {stakeForm.formState.errors.lockDays ? (
                   <p className="text-xs text-rose-400">
@@ -214,7 +227,7 @@ export default function StakingPage() {
               getContractStats.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm text-white/70">
+          <CardContent className="space-y-8 text-sm text-white/70">
             <div className="rounded-xl bg-white/5 p-4">
               <p className="text-xs uppercase tracking-wide text-white/50">
                 You
@@ -254,6 +267,7 @@ export default function StakingPage() {
                 Unstake position ID
               </label>
               <Input
+                className="my-3"
                 placeholder="Stake ID"
                 {...withdrawForm.register("stakeId")}
               />

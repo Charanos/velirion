@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nunito, Montserrat, Geist_Mono } from "next/font/google";
 import { AppProviders } from "@/lib/config/providers";
 import { Toaster } from "@/components/ui/sonner";
+import "@/lib/utils/contract-diagnostics"; // Run diagnostics on startup
 import "./globals.css";
 
 const montserrat = Montserrat({

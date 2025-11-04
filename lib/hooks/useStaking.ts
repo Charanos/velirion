@@ -130,7 +130,9 @@ export function useStakingData() {
     const raw = userInfoQuery.data as
       | readonly [bigint, bigint, bigint, bigint]
       | undefined;
-    if (!raw) return undefined;
+    if (!raw || raw[0] == null || raw[1] == null || raw[2] == null || raw[3] == null) {
+      return undefined;
+    }
     return {
       totalStaked: formatUnits(raw[0], VLR_TOKEN_CONFIG.decimals),
       totalRewardsClaimed: formatUnits(raw[1], VLR_TOKEN_CONFIG.decimals),
@@ -143,7 +145,9 @@ export function useStakingData() {
     const raw = statsQuery.data as
       | readonly [bigint, bigint, bigint, bigint]
       | undefined;
-    if (!raw) return undefined;
+    if (!raw || raw[0] == null || raw[1] == null || raw[2] == null || raw[3] == null) {
+      return undefined;
+    }
     return {
       totalStaked: formatUnits(raw[0], VLR_TOKEN_CONFIG.decimals),
       totalStakers: Number(raw[1]),
@@ -160,7 +164,14 @@ export function useStakingData() {
         | undefined;
       const rewardsResult = rewardsQuery.data?.[index]?.result as bigint | undefined;
 
-      if (!infoResult) {
+      if (!infoResult || 
+          infoResult[0] == null || 
+          infoResult[1] == null || 
+          infoResult[2] == null || 
+          infoResult[3] == null || 
+          infoResult[4] == null || 
+          infoResult[5] == null || 
+          infoResult[6] == null) {
         return {
           id,
           amount: '0',
@@ -225,12 +236,14 @@ export function useStakingData() {
     });
   }, [stakeIds, stakeInfoQuery.data, rewardsQuery.data]);
 
-  const isLoading =
-    userInfoQuery.isLoading ||
-    statsQuery.isLoading ||
-    stakeIdsQuery.isLoading ||
-    stakeInfoQuery.isLoading ||
-    rewardsQuery.isLoading;
+  // Only report loading if staking config is available
+  const isLoading = STAKING_CONFIG.address
+    ? userInfoQuery.isLoading ||
+      statsQuery.isLoading ||
+      stakeIdsQuery.isLoading ||
+      stakeInfoQuery.isLoading ||
+      rewardsQuery.isLoading
+    : false;
 
   return {
     summary,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactionStore } from "@/lib/stores/transactionStore";
 import { ExternalLink } from "lucide-react";
@@ -16,8 +17,13 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export function LatestTransactions() {
+  const [mounted, setMounted] = useState(false);
   const { getRecentTransactions } = useTransactionStore();
   const recentTransactions = getRecentTransactions(3);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formatTime = (timestamp: number) => {
     const now = Date.now();
@@ -45,7 +51,9 @@ export function LatestTransactions() {
         </button>
       </CardHeader>
       <CardContent className="space-y-4">
-        {recentTransactions.length === 0 ? (
+        {!mounted ? (
+          <p className="text-sm text-white/60 text-center py-4">Loading...</p>
+        ) : recentTransactions.length === 0 ? (
           <p className="text-sm text-white/60 text-center py-4">No recent transactions</p>
         ) : (
           recentTransactions.map((tx) => (

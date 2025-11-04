@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { config } from './wagmi';
 import { SolanaProviders } from './solana-providers';
+import { TransactionSyncProvider } from '@/components/providers/transaction-sync-provider';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 
@@ -74,7 +75,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <SolanaProviders>{children}</SolanaProviders>
+          <TransactionSyncProvider>
+            <SolanaProviders>{children}</SolanaProviders>
+          </TransactionSyncProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -37,20 +37,34 @@ async function saveTransactionToDB(tx: Transaction, walletAddress: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...tx, walletAddress }),
     });
-    if (!response.ok) console.error('Failed to save transaction to DB');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Failed to save transaction to DB:', error);
+    } else {
+      const result = await response.json();
+      console.log('✅ Transaction saved to DB:', tx.hash.slice(0, 10));
+    }
   } catch (error) {
     console.error('Error saving transaction to DB:', error);
   }
 }
 
-async function updateTransactionInDB(hash: string, updates: Partial<Transaction>) {
+async function updateTransactionInDB(hash: string, updates: Partial<Transaction> & { walletAddress?: string | null }) {
   try {
     const response = await fetch('/api/transactions', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hash, ...updates }),
     });
-    if (!response.ok) console.error('Failed to update transaction in DB');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Failed to update transaction in DB:', error);
+    } else {
+      const result = await response.json();
+      console.log('✅ Transaction updated in DB:', hash.slice(0, 10), updates.status);
+    }
   } catch (error) {
     console.error('Error updating transaction in DB:', error);
   }
@@ -113,6 +127,9 @@ export const useTransactionStore = create<TransactionStore>()(
       },
 
       updateTransaction: async (hash, updates) => {
+        // Get the full transaction for upsert support
+        const existingTx = get().transactions.find(tx => tx.hash === hash);
+        
         // Update local state immediately
         set((state) => ({
           transactions: state.transactions.map((tx) =>
@@ -120,8 +137,21 @@ export const useTransactionStore = create<TransactionStore>()(
           ),
         }));
 
-        // Sync to MongoDB in background
-        await updateTransactionInDB(hash, updates);
+        // Sync to MongoDB in background with full transaction data for upsert
+        if (existingTx) {
+          const fullUpdate = {
+            ...updates,
+            type: existingTx.type,
+            amount: existingTx.amount,
+            to: existingTx.to,
+            from: existingTx.from,
+            walletAddress: get().walletAddress,
+            timestamp: existingTx.timestamp,
+          };
+          await updateTransactionInDB(hash, fullUpdate);
+        } else {
+          await updateTransactionInDB(hash, updates);
+        }
       },
 
       fetchTransactions: async (walletAddress) => {

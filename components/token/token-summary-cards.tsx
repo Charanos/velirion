@@ -1,21 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Activity, Gauge } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTokenBalance } from "@/lib/hooks/useTokenBalance";
 import { useTokenActions } from "@/lib/hooks/useTokenActions";
+import { safeToFixed } from "@/lib/utils/formatters";
 
 export function TokenSummaryCards() {
+  const [mounted, setMounted] = useState(false);
   const { address } = useAccount();
   const balance = useTokenBalance();
   const actions = useTokenActions();
 
-  const formattedBalance = balance.balance
-    ? `${Number(balance.balance).toFixed(3)} ${balance.symbol}`
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const formattedBalance = !mounted || balance.loading
+    ? "Loading…"
+    : balance.balance
+    ? `${safeToFixed(Number(balance.balance), 3)} ${balance.symbol}`
     : "--";
-  const wagmiBalance = Number.isFinite(actions.balance)
-    ? `${actions.balance.toFixed(3)} VLR`
+  const wagmiBalance = !mounted || actions.balanceStatus === "pending"
+    ? "Loading…"
+    : Number.isFinite(actions.balance)
+    ? `${safeToFixed(actions.balance, 3)} VLR`
     : "--";
 
   return (

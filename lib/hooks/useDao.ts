@@ -223,19 +223,19 @@ export function useDaoData() {
       }
 
       return {
-        id: proposalResult[0],
-        proposer: proposalResult[1],
-        description: proposalResult[2],
-        targets: [...proposalResult[3]] as Address[],
-        values: proposalResult[4].map((value) => formatUnits(value, 18)),
-        calldatas: [...proposalResult[5]],
-        startBlock: proposalResult[6],
-        endBlock: proposalResult[7],
-        forVotes: formatUnits(proposalResult[8], 18),
-        againstVotes: formatUnits(proposalResult[9], 18),
-        abstainVotes: formatUnits(proposalResult[10], 18),
-        executed: proposalResult[11],
-        canceled: proposalResult[12],
+        id: proposalResult[0] ?? 0n,
+        proposer: proposalResult[1] ?? '0x0000000000000000000000000000000000000000',
+        description: proposalResult[2] ?? 'Unknown',
+        targets: Array.isArray(proposalResult[3]) ? [...proposalResult[3]] as Address[] : [],
+        values: Array.isArray(proposalResult[4]) ? proposalResult[4].map((value) => formatUnits(value ?? 0n, 18)) : [],
+        calldatas: Array.isArray(proposalResult[5]) ? [...proposalResult[5]] : [],
+        startBlock: proposalResult[6] ?? 0n,
+        endBlock: proposalResult[7] ?? 0n,
+        forVotes: proposalResult[8] != null ? formatUnits(proposalResult[8], 18) : '0',
+        againstVotes: proposalResult[9] != null ? formatUnits(proposalResult[9], 18) : '0',
+        abstainVotes: proposalResult[10] != null ? formatUnits(proposalResult[10], 18) : '0',
+        executed: proposalResult[11] ?? false,
+        canceled: proposalResult[12] ?? false,
         state: STATE_MAP[stateResult ?? 0] ?? 'Pending',
         eta: etaResult,
       } satisfies Proposal;
@@ -247,9 +247,9 @@ export function useDaoData() {
         return { hasVoted: false, support: 0, votes: '0' } satisfies Receipt;
       }
       return {
-        hasVoted: receipt[0],
-        support: receipt[1],
-        votes: formatUnits(receipt[2], 18),
+        hasVoted: receipt[0] ?? false,
+        support: receipt[1] ?? 0,
+        votes: receipt[2] != null ? formatUnits(receipt[2], 18) : '0',
       } satisfies Receipt;
     });
 
@@ -263,12 +263,13 @@ export function useDaoData() {
       votingPower: votingPower.data
         ? formatUnits(votingPower.data as bigint, 18)
         : undefined,
-      isLoading:
-        proposalCount.isLoading ||
-        quorumVotes.isLoading ||
-        proposalThreshold.isLoading ||
-        proposals.isLoading ||
-        proposalStates.isLoading,
+      isLoading: DAO_CONFIG.address
+        ? proposalCount.isLoading ||
+          quorumVotes.isLoading ||
+          proposalThreshold.isLoading ||
+          proposals.isLoading ||
+          proposalStates.isLoading
+        : false,
     };
   }, [
     proposals.data,
