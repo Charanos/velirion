@@ -9,7 +9,7 @@ import {
   Layers,
   LineChart,
   Users,
-  Settings,
+  Receipt,
   LogOut,
   X,
 } from "lucide-react";
@@ -20,7 +20,7 @@ const links = [
   { label: "Presale", href: "/presale", icon: Layers },
   { label: "Staking", href: "/staking", icon: LineChart },
   { label: "DAO", href: "/dao", icon: Users },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Transactions", href: "/transactions", icon: Receipt },
 ];
 
 type SidebarNavProps = {

@@ -19,6 +19,16 @@ export function StatCardsRow() {
     setMounted(true);
   }, []);
 
+  // Debug logging
+  useEffect(() => {
+    if (mounted && !stakingLoading && stakingSummary) {
+      console.log('Staking Summary:', stakingSummary);
+    }
+    if (mounted && !daoLoading && votingPower !== undefined) {
+      console.log('DAO Voting Power:', votingPower);
+    }
+  }, [mounted, stakingLoading, stakingSummary, daoLoading, votingPower]);
+
   const stats = [
     {
       label: "Token Balance",
@@ -29,21 +39,21 @@ export function StatCardsRow() {
     },
     {
       label: "Staked",
-      value: !mounted
+      value: !mounted || stakingLoading
         ? "Loading..."
-        : stakingLoading
-        ? "Loading..."
-        : stakingSummary
+        : stakingSummary && stakingSummary.totalStaked
         ? `${safeFormatBalance(stakingSummary.totalStaked)} VLR`
         : "0 VLR",
-      loading: stakingLoading,
+      loading: !mounted || stakingLoading,
     },
     {
       label: "DAO Voting Power",
-      value: !mounted || daoLoading 
-        ? "Loading..." 
-        : `${safeFormatBalance(votingPower ?? "0")} VP`,
-      loading: daoLoading,
+      value: !mounted || daoLoading
+        ? "Loading..."
+        : votingPower !== undefined && votingPower !== null
+        ? `${safeFormatBalance(votingPower)} VP`
+        : "0 VP",
+      loading: !mounted || daoLoading,
     },
     {
       label: "Solana SPL Balance",

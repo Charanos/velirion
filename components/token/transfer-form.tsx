@@ -27,12 +27,13 @@ export function TransferForm() {
   async function onSubmit(values: z.infer<typeof transferSchema>) {
     try {
       const hash = await transfer(values.recipient, values.amount);
-      toast.success(`Transfer submitted! Hash: ${hash.slice(0, 10)}...`);
+      toast.success(`Transfer submitted successfully! Transaction: ${hash.slice(0, 10)}...`);
       form.reset();
       // Balance will auto-update when transaction confirms
-    } catch (error) {
-      console.error(error);
-      toast.error('Transfer failed, check console for details');
+    } catch (error: any) {
+      console.error('Transfer error:', error);
+      const errorMessage = error?.message || 'Transfer failed. Please check console for details.';
+      toast.error(errorMessage);
     }
   }
 

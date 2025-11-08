@@ -163,26 +163,47 @@ export function usePresaleActions() {
 
   async function buyWithETH(amount: string, referrer?: string | null) {
     if (!PRESALE_CONFIG.address) throw new Error('Presale contract address missing');
+    if (!address) throw new Error('Wallet not connected');
+    
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      throw new Error('Invalid amount. Please enter a valid ETH amount.');
+    }
+    
     const value = parseEther(amount);
-    const hash = await writePresale({
-      address: PRESALE_CONFIG.address,
-      abi: PRESALE_CONFIG.abi,
-      functionName: 'buyWithETH',
-      args: [getSafeAddress(referrer)],
-      value,
-      gas: 250000n, // Explicit gas limit
-    });
+    console.log('Buying with ETH:', { amount, value: value.toString(), referrer });
     
-    addTransaction({
-      hash,
-      type: 'presale',
-      amount: amount,
-      from: address,
-    });
-    
-    await wait(hash);
-    
-    updateTransaction(hash, { status: 'confirmed' });
+    try {
+      const hash = await writePresale({
+        address: PRESALE_CONFIG.address,
+        abi: PRESALE_CONFIG.abi,
+        functionName: 'buyWithETH',
+        args: [getSafeAddress(referrer)],
+        value,
+      });
+      
+      console.log('ETH purchase transaction sent:', hash);
+      
+      addTransaction({
+        hash,
+        type: 'presale',
+        amount: amount,
+        from: address,
+        currency: 'ETH',
+        details: `Presale purchase with ${amount} ETH`,
+      });
+      
+      await wait(hash);
+      
+      updateTransaction(hash, { status: 'confirmed' });
+      console.log('ETH purchase confirmed');
+    } catch (error: any) {
+      console.error('ETH purchase error:', error);
+      if (error.message?.includes('insufficient funds')) {
+        throw new Error('Insufficient ETH balance for purchase and gas fees.');
+      }
+      throw error;
+    }
   }
 
   async function buyWithToken(
@@ -193,33 +214,63 @@ export function usePresaleActions() {
   ) {
     if (!PRESALE_CONFIG.address) throw new Error('Presale contract address missing');
     if (!tokenConfig.address) throw new Error(`${tokenConfig.symbol} address missing`);
+    if (!address) throw new Error('Wallet not connected');
+    
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      throw new Error(`Invalid amount. Please enter a valid ${tokenConfig.symbol} amount.`);
+    }
+    
     const parsed = parseUnits(amount, tokenConfig.decimals);
-    const approveHash = await writeToken({
-      address: tokenConfig.address,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [PRESALE_CONFIG.address, parsed],
-      gas: 100000n, // Explicit gas limit
-    });
-    await wait(approveHash);
-    const buyHash = await writePresale({
-      address: PRESALE_CONFIG.address,
-      abi: PRESALE_CONFIG.abi,
-      functionName,
-      args: [parsed, getSafeAddress(referrer)],
-      gas: 250000n, // Explicit gas limit
+    console.log(`Buying with ${tokenConfig.symbol}:`, {
+      amount,
+      parsed: parsed.toString(),
+      referrer,
     });
     
-    addTransaction({
-      hash: buyHash,
-      type: 'presale',
-      amount: amount,
-      from: address,
-    });
-    
-    await wait(buyHash);
-    
-    updateTransaction(buyHash, { status: 'confirmed' });
+    try {
+      // Approve tokens
+      console.log(`Approving ${tokenConfig.symbol}...`);
+      const approveHash = await writeToken({
+        address: tokenConfig.address,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [PRESALE_CONFIG.address, parsed],
+      });
+      await wait(approveHash);
+      console.log('Approval confirmed:', approveHash);
+      
+      // Buy tokens
+      console.log('Executing purchase...');
+      const buyHash = await writePresale({
+        address: PRESALE_CONFIG.address,
+        abi: PRESALE_CONFIG.abi,
+        functionName,
+        args: [parsed, getSafeAddress(referrer)],
+      });
+      
+      console.log(`${tokenConfig.symbol} purchase transaction sent:`, buyHash);
+      
+      addTransaction({
+        hash: buyHash,
+        type: 'presale',
+        amount: amount,
+        from: address,
+        currency: tokenConfig.symbol,
+        details: `Presale purchase with ${amount} ${tokenConfig.symbol}`,
+      });
+      
+      await wait(buyHash);
+      
+      updateTransaction(buyHash, { status: 'confirmed' });
+      console.log(`${tokenConfig.symbol} purchase confirmed`);
+    } catch (error: any) {
+      console.error(`${tokenConfig.symbol} purchase error:`, error);
+      if (error.message?.includes('insufficient funds')) {
+        throw new Error(`Insufficient ETH balance for gas fees or insufficient ${tokenConfig.symbol} balance.`);
+      }
+      throw error;
+    }
   }
 
   async function buyWithUSDC(amount: string, referrer?: string | null) {
@@ -233,12 +284,23 @@ export function usePresaleActions() {
   async function claim() {
     if (!PRESALE_CONFIG.address) throw new Error('Presale contract address missing');
     if (!address) throw new Error('Wallet not connected');
-    const hash = await writePresale({
-      address: PRESALE_CONFIG.address,
-      abi: PRESALE_CONFIG.abi,
-      functionName: 'claimTokens',
-    });
-    await wait(hash);
+    
+    console.log('Claiming presale tokens...');
+    
+    try {
+      const hash = await writePresale({
+        address: PRESALE_CONFIG.address,
+        abi: PRESALE_CONFIG.abi,
+        functionName: 'claimTokens',
+      });
+      
+      console.log('Claim transaction sent:', hash);
+      await wait(hash);
+      console.log('Claim confirmed');
+    } catch (error: any) {
+      console.error('Claim error:', error);
+      throw error;
+    }
   }
 
   return {

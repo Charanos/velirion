@@ -76,6 +76,9 @@ export default function PresalePage() {
     try {
       const trimmedReferrer = values.referrer?.trim();
       const referrer = trimmedReferrer ? trimmedReferrer : undefined;
+      
+      const currencyLabel = handlerKey === "eth" ? "ETH" : handlerKey.toUpperCase();
+      
       if (handlerKey === "eth") {
         await actions.buyWithETH(values.amount, referrer);
       } else if (handlerKey === "usdc") {
@@ -83,11 +86,13 @@ export default function PresalePage() {
       } else {
         await actions.buyWithUSDT(values.amount, referrer);
       }
-      toast.success("Presale transaction submitted");
+      
+      toast.success(`Presale purchase with ${currencyLabel} submitted successfully!`);
       forms[handlerKey].reset();
-    } catch (error) {
-      console.error(error);
-      toast.error("Presale transaction failed");
+    } catch (error: any) {
+      console.error('Presale error:', error);
+      const errorMessage = error?.message || "Presale transaction failed. Check console for details.";
+      toast.error(errorMessage);
     }
   };
 

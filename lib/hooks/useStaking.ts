@@ -27,10 +27,10 @@ const TIER_IDS = [0, 1, 2, 3] as const;
 
 // Tier configurations per Phase 2 spec
 const STAKING_TIERS = {
-  0: { name: 'Flexible', minAmount: 100, minLockDays: 0, maxLockDays: 0, baseAPR: 6, renewedAPR: 6 },
-  1: { name: 'Medium', minAmount: 1000, minLockDays: 90, maxLockDays: 180, baseAPR: 12, renewedAPR: 15 },
-  2: { name: 'Long', minAmount: 5000, minLockDays: 365, maxLockDays: 365, baseAPR: 20, renewedAPR: 22 },
-  3: { name: 'Elite', minAmount: 250000, minLockDays: 730, maxLockDays: 730, baseAPR: 30, renewedAPR: 32 },
+  0: { name: 'Flexible', minAmount: 100, minLockDays: 30, maxLockDays: 30, baseAPR: 6, renewedAPR: 6 },
+  1: { name: 'Medium', minAmount: 1000, minLockDays: 60, maxLockDays: 120, baseAPR: 12, renewedAPR: 15 },
+  2: { name: 'Long', minAmount: 5000, minLockDays: 180, maxLockDays: 365, baseAPR: 20, renewedAPR: 22 },
+  3: { name: 'Elite', minAmount: 250000, minLockDays: 360, maxLockDays: 730, baseAPR: 30, renewedAPR: 32 },
 } as const;
 
 type StakeInfo = {
@@ -287,32 +287,71 @@ export function useStakingActions() {
     if (!address) throw new Error('Connect wallet to stake');
     if (!STAKING_CONFIG.address) throw new Error('Staking address missing');
 
-    const parsedAmount = parseUnits(args.amount, VLR_TOKEN_CONFIG.decimals);
-    const lockSeconds = BigInt(Math.max(Math.floor(args.lockDays * 86400), 0));
+    // Validate tier
+    const tierConfig = STAKING_TIERS[args.tier as keyof typeof STAKING_TIERS];
+    if (!tierConfig) {
+      throw new Error(`Invalid tier: ${args.tier}. Must be 0-3.`);
+    }
 
+    // Validate amount
+    const amountNum = parseFloat(args.amount);
+    if (amountNum < tierConfig.minAmount) {
+      throw new Error(
+        `Minimum stake for ${tierConfig.name} tier is ${tierConfig.minAmount} VLR. You entered ${amountNum} VLR.`
+      );
+    }
+
+    // Validate lock duration
+    if (args.lockDays < tierConfig.minLockDays) {
+      throw new Error(
+        `Minimum lock period for ${tierConfig.name} tier is ${tierConfig.minLockDays} days. You entered ${args.lockDays} days.`
+      );
+    }
+    if (args.lockDays > tierConfig.maxLockDays) {
+      throw new Error(
+        `Maximum lock period for ${tierConfig.name} tier is ${tierConfig.maxLockDays} days. You entered ${args.lockDays} days.`
+      );
+    }
+
+    const parsedAmount = parseUnits(args.amount, VLR_TOKEN_CONFIG.decimals);
+    const lockSeconds = BigInt(Math.floor(args.lockDays * 86400));
+
+    console.log('Staking with params:', {
+      amount: parsedAmount.toString(),
+      tier: args.tier,
+      lockSeconds: lockSeconds.toString(),
+      lockDays: args.lockDays,
+    });
+
+    // Approve tokens
     const approveHash = await writeToken({
       address: VLR_TOKEN_CONFIG.address,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [STAKING_CONFIG.address, parsedAmount],
-      gas: 100000n, // Explicit gas limit to prevent "gas limit too high" error
     });
     await wait(approveHash);
+    console.log('Approval successful:', approveHash);
 
+    // Stake tokens
     const stakeHash = await writeStaking({
       address: STAKING_CONFIG.address,
       abi: STAKING_CONFIG.abi,
       functionName: 'stake',
       args: [parsedAmount, args.tier, lockSeconds],
-      gas: 300000n, // Explicit gas limit
     });
+    console.log('Stake transaction sent:', stakeHash);
     
-    // Track transaction
+    // Track transaction with detailed info
     addTransaction({
       hash: stakeHash,
       type: 'stake',
       amount: args.amount,
       from: address,
+      tier: args.tier,
+      lockDays: args.lockDays,
+      currency: 'VLR',
+      details: `Stake ${args.amount} VLR in Tier ${args.tier} for ${args.lockDays} days`,
     });
     
     await wait(stakeHash);
@@ -329,15 +368,18 @@ export function useStakingActions() {
       abi: STAKING_CONFIG.abi,
       functionName: 'unstake',
       args: [BigInt(stakeId)],
-      gas: 200000n, // Explicit gas limit
+      gas: 300000n, // Increased gas limit
     });
     
     // Track transaction
     addTransaction({
       hash,
       type: 'unstake',
-      amount: stakeId.toString(),
+      amount: '0',
       from: address,
+      stakeId: stakeId.toString(),
+      currency: 'VLR',
+      details: `Unstake position #${stakeId}`,
     });
     
     await wait(hash);
@@ -354,15 +396,18 @@ export function useStakingActions() {
       abi: STAKING_CONFIG.abi,
       functionName: 'claimRewards',
       args: [BigInt(stakeId)],
-      gas: 150000n, // Explicit gas limit
+      gas: 200000n, // Increased gas limit
     });
     
     // Track transaction
     addTransaction({
       hash,
       type: 'claim',
-      amount: stakeId.toString(),
+      amount: '0',
       from: address,
+      stakeId: stakeId.toString(),
+      currency: 'VLR',
+      details: `Claim rewards from stake #${stakeId}`,
     });
     
     await wait(hash);

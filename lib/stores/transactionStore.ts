@@ -15,6 +15,13 @@ export type Transaction = {
   timestamp: number;
   status: 'pending' | 'confirmed' | 'failed';
   blockNumber?: number;
+  // Enhanced fields for detailed tracking
+  tier?: number;
+  stakeId?: string;
+  proposalId?: string;
+  currency?: string;
+  lockDays?: number;
+  details?: string;
 };
 
 type TransactionStore = {
@@ -25,6 +32,7 @@ type TransactionStore = {
   addTransaction: (tx: Omit<Transaction, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   updateTransaction: (hash: string, updates: Partial<Transaction>) => Promise<void>;
   getRecentTransactions: (limit?: number) => Transaction[];
+  getAllTransactions: (limit?: number) => Transaction[];
   fetchTransactions: (walletAddress: string) => Promise<void>;
   clearTransactions: () => void;
 };
@@ -169,6 +177,10 @@ export const useTransactionStore = create<TransactionStore>()(
         return get()
           .transactions.filter((tx) => tx.status === 'confirmed')
           .slice(0, limit);
+      },
+
+      getAllTransactions: (limit = 100) => {
+        return get().transactions.slice(0, limit);
       },
 
       clearTransactions: () => {

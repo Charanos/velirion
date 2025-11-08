@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 import { PageShell } from "@/components/dashboard/page-shell";
 import {
   Card,
@@ -30,8 +31,9 @@ const tiers = [
     id: 0,
     name: "Flexible",
     apr: "6% APR",
-    lock: "30 day minimum",
+    lock: "30 days",
     minDays: 30,
+    minAmount: 100,
   },
   {
     id: 1,
@@ -39,9 +41,24 @@ const tiers = [
     apr: "12-15% APR",
     lock: "60-120 days",
     minDays: 60,
+    minAmount: 1000,
   },
-  { id: 2, name: "Long", apr: "20-22% APR", lock: "180+ days", minDays: 180 },
-  { id: 3, name: "Elite", apr: "30-32% APR", lock: "360+ days", minDays: 360 },
+  { 
+    id: 2, 
+    name: "Long", 
+    apr: "20-22% APR", 
+    lock: "180-365 days", 
+    minDays: 180,
+    minAmount: 5000,
+  },
+  { 
+    id: 3, 
+    name: "Elite", 
+    apr: "30-32% APR", 
+    lock: "360-730 days", 
+    minDays: 360,
+    minAmount: 250000,
+  },
 ];
 
 export default function StakingPage() {
@@ -84,12 +101,15 @@ export default function StakingPage() {
         tier: Number(values.tier),
         lockDays: Number(values.lockDays),
       });
-      toast.success("Stake transaction submitted");
+      toast.success("Stake transaction submitted successfully!");
       stakeForm.reset();
-      refetchAll();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to stake");
+      // Refetch after a short delay to ensure blockchain state is updated
+      setTimeout(() => {
+        refetchAll();
+      }, 2000);
+    } catch (error: any) {
+      console.error("Stake error:", error);
+      toast.error(error?.message || "Failed to stake. Check console for details.");
     }
   };
 
@@ -137,6 +157,9 @@ export default function StakingPage() {
                   <p className="text-sm font-medium">{tier.name}</p>
                   <p className="text-xs text-white/60">{tier.apr}</p>
                   <p className="text-xs text-white/50">{tier.lock}</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    Min: {tier.minAmount.toLocaleString()} VLR
+                  </p>
                 </Card>
               ))}
             </div>
@@ -154,6 +177,11 @@ export default function StakingPage() {
                   {...stakeForm.register("amount")}
                   className="bg-zinc-900"
                 />
+                {currentTierData && (
+                  <p className="text-xs text-white/50">
+                    Minimum for {currentTierData.name}: {currentTierData.minAmount.toLocaleString()} VLR
+                  </p>
+                )}
                 {stakeForm.formState.errors.amount ? (
                   <p className="text-xs text-rose-400">
                     {stakeForm.formState.errors.amount.message}
@@ -286,17 +314,36 @@ export default function StakingPage() {
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="border border-white/10 bg-zinc-900/70 text-white shadow-sm backdrop-blur-lg">
           <CardHeader>
-            <CardTitle className="text-lg font-heading">Your stakes</CardTitle>
-            <CardDescription className="text-xs text-white/60">
-              Claim rewards or verify lock periods. Data from getStakeInfo +
-              calculateRewards.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-heading">Your stakes</CardTitle>
+                <CardDescription className="text-xs text-white/60">
+                  Claim rewards or verify lock periods. Data from getStakeInfo +
+                  calculateRewards.
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  refetchAll();
+                  toast.info("Refreshing stakes...");
+                }}
+                disabled={isLoading}
+                className="border-white/20 h-8"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-white/70">
-            {stakes.length === 0 ? (
-              <p>{isLoading ? "Loading positions…" : "No stakes yet."}</p>
+            {isLoading ? (
+              <p className="text-center py-4">Loading positions…</p>
+            ) : stakes.length === 0 ? (
+              <p className="text-center py-4">No stakes yet. Create your first stake above!</p>
             ) : (
               <div className="space-y-3">
+                <p className="text-xs text-white/50 mb-2">Total stakes: {stakes.length}</p>
                 {stakes.map((stakeItem) => (
                   <div
                     key={stakeItem.id.toString()}

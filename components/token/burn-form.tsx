@@ -25,12 +25,13 @@ export function BurnForm() {
   async function onSubmit(values: z.infer<typeof burnSchema>) {
     try {
       const hash = await burn(values.amount);
-      toast.success(`Burn submitted! Hash: ${hash.slice(0, 10)}...`);
+      toast.success(`Burn submitted successfully! Transaction: ${hash.slice(0, 10)}...`);
       form.reset();
       // Balance will auto-update when transaction confirms
-    } catch (error) {
-      console.error(error);
-      toast.error('Burn failed, check console for details');
+    } catch (error: any) {
+      console.error('Burn error:', error);
+      const errorMessage = error?.message || 'Burn failed. Please check console for details.';
+      toast.error(errorMessage);
     }
   }
 

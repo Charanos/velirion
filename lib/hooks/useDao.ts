@@ -334,8 +334,10 @@ export function useDaoActions() {
     addTransaction({
       hash,
       type: 'dao_propose',
-      amount: description.slice(0, 50),
+      amount: '0',
       from: address,
+      currency: 'VLR',
+      details: description.slice(0, 100),
     });
     
     await wait(hash);
@@ -359,6 +361,9 @@ export function useDaoActions() {
       type: 'dao_vote',
       amount: voteAmount,
       from: address,
+      proposalId: proposalId.toString(),
+      currency: 'VLR',
+      details: `Vote on proposal #${proposalId} with ${voteAmount} VLR (${support === 0 ? 'Against' : support === 1 ? 'For' : 'Abstain'})`,
     });
     
     await wait(hash);
